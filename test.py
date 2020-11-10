@@ -9,29 +9,36 @@ DPI = 72
 width, height = 600, 600
 
 N = 500
-
-random_shift = np.random.rand(2) * 300
-print("random horizontal shift:", random_shift[0])
-print("random vertical shift:", random_shift[1])
-
-coords = np.random.rand(N, 2) * height / 2 + random_shift
-coords = make_blobs(n_samples=500, n_features=2, center_box=(0,300), cluster_std=30)[0] + random_shift
-points = [Point(*coord) for coord in coords]
+T = 900
+qtrees = []
+base_coords = make_blobs(n_samples=500, n_features=2, center_box=(0, 300), cluster_std=30)[0]
 
 
-domain = Rect(width / 2, height / 2, width, height)
-qtree = QuadTree(domain, 1)
+def fill_quadtree():
+    random_shift = np.random.rand(2) * 300
+    print("random horizontal shift:", random_shift[0])
+    print("random vertical shift:", random_shift[1])
+
+    # Add a random shift to the point set and generate the points
+    coords = [base_coord + random_shift for base_coord in base_coords]
+    pts = [Point(*coord) for coord in coords]
+
+    domain = Rect(width / 2, height / 2, width, height)
+    qt = QuadTree(domain, 1)
+    for pt in pts:
+        qt.insert(pt)
+    for pt in pts:
+        qt.score(pt)
+    print('Number of points in the domain =', len(qt))
+    return qt, pts
+
+
+qtree, points = fill_quadtree()
 for point in points:
-    qtree.insert(point)
-    qtree.score(point)
-    print(point.payload)
-    if point.payload < 650:
+    if point.payload > T:
         point.payload = 0
     else:
         point.payload = 1
-    print(point.payload)
-
-print('Number of points in the domain =', len(qtree))
 
 fig = plt.figure(figsize=(700 / DPI, 500 / DPI), dpi=DPI)
 ax = plt.subplot()
