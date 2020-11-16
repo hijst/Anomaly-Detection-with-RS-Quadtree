@@ -145,13 +145,13 @@ class QuadTree:
                 self.sw.insert(point))
 
     def score(self, point):
-        """Score all of the points in the quadtree based on how many points are in its regions"""
+        """Score a point in the quadtree based on how many points are in its regions"""
 
         if not self.boundary.contains(point):
             return False
 
         found_points = []
-        point.payload += len(self.query(self.boundary, found_points))
+        point.payload += len(self.query(self.boundary, found_points)) * (4 ** self.depth)
 
         if self.divided:
             self.ne.score(point)
@@ -161,7 +161,22 @@ class QuadTree:
 
         return point.payload
 
+    def score_depth(self, point):
+        """Score a point in the quadtree based on how deep its leaf lies"""
 
+        if not self.boundary.contains(point):
+            return False
+
+        if self.divided:
+            self.ne.score(point)
+            self.nw.score(point)
+            self.se.score(point)
+            self.sw.score(point)
+
+        else:
+            point.payload += self.depth
+
+        return point.payload
 
     def query(self, boundary, found_points):
         """Find the points in the quadtree that lie within boundary."""

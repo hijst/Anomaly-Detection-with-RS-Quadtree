@@ -7,3 +7,10 @@ Anomaly detection algorithm using randomly shifted quadtrees
 - numpy
 - matplotlib
 - sklearn
+
+## file descriptions:
+
+- quadtree.py: implementation of a basic quadtree with scoring function
+- RSQT_forest.py: using multiple quadtrees to score a dataset on anomalies
+- random_shift_test.py: a test on a single dataset, just used for fast testing
+- AnomalyDetection.py: comparing RSQT to other anomaly detection methods
