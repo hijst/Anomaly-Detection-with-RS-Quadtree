@@ -7,17 +7,22 @@ width, height = 600, 600
 
 class RSQT:
 
-    def __init__(self, contamination=0.10):
+    def __init__(self, contamination=0.10, domain=0):
         self.points = []
         self.contamination = contamination
+        self.domain = domain
 
     def fill_quadtree(self, data, rs=1):
         """Apply random shift to points, then fill the quadtree with the points and score the points."""
 
+        mn = np.amin(data)
+        mx = np.amax(data)
+        self.domain = int((mx-mn)) + 1
+
         if rs == 0:
             random_shift = [0, 0]
         else:
-            random_shift = np.random.rand(2) * 300
+            random_shift = np.random.rand(2) * self.domain
         print("random horizontal shift:", round(random_shift[0], 2))
         print("random vertical shift:", round(random_shift[1], 2))
 
@@ -25,7 +30,7 @@ class RSQT:
         coords = [point + random_shift for point in data]
         pts = [Point(*coord) for coord in coords]
 
-        domain = Rect(width / 2, height / 2, width, height)
+        domain = Rect(mx, mx, 2 * self.domain, 2 * self.domain)
         qt = QuadTree(domain, 1)
         for pt in pts:
             qt.insert(pt)

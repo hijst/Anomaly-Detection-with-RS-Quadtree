@@ -14,7 +14,7 @@ class Point:
         self.is_outlier = is_outlier
 
     def __repr__(self):
-        return '{}: {}'.format(str((self.x, self.y)), repr(self.anomaly_score))
+        return '{}: {}'.format(str((self.x, self.y)), repr(self.anomaly_score), repr(self.is_outlier))
 
     def __str__(self):
         return 'P({:.2f}, {:.2f})'.format(self.x, self.y)
@@ -71,7 +71,7 @@ class Rect:
 class QuadTree:
     """A class implementing a quadtree."""
 
-    def __init__(self, boundary, max_points=1, depth=0):
+    def __init__(self, boundary, max_points=1, depth=0, domain=0):
         """Initialize this node of the quadtree.
 
         boundary is a Rect object defining the region from which points are

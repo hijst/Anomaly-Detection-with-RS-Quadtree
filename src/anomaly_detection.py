@@ -105,5 +105,5 @@ for i_dataset, X in enumerate(datasets):
                  horizontalalignment='right')
         plot_num += 1
 
-plt.savefig('./output/ad_methods_comparison.pdf')
+# plt.savefig('./output/ad_methods_comparison.pdf')
 plt.show()
