@@ -1,8 +1,8 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_blobs, make_moons
-from RSQT_forest import RSQT
+from sklearn.datasets import make_blobs
+from src.rsqt_forest import RSQT
 
 start_time = time.time()
 

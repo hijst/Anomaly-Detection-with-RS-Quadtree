@@ -1,5 +1,5 @@
 import numpy as np
-from quadtree import Point, Rect, QuadTree
+from src.quadtree import Point, Rect, QuadTree
 
 
 width, height = 600, 600

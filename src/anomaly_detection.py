@@ -13,7 +13,7 @@ from sklearn.datasets import make_moons, make_blobs
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
-from RSQT_forest import RSQT
+from src.rsqt_forest import RSQT
 
 print(__doc__)
 
