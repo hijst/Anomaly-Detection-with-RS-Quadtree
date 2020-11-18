@@ -60,6 +60,8 @@ plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
 plot_num = 1
 rng = np.random.RandomState(42)
 
+ss = time.time()
+
 for i_dataset, X in enumerate(datasets):
     # Add outliers
     X = np.concatenate([X, rng.uniform(low=-6, high=6,
@@ -69,6 +71,7 @@ for i_dataset, X in enumerate(datasets):
         t0 = time.time()
         check = []
         checker = []
+        points = []
         if name != "RSQT Forest":
             algorithm.fit(X)
         t1 = time.time()
@@ -95,7 +98,7 @@ for i_dataset, X in enumerate(datasets):
             plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[(y_pred + 1) // 2])
         else:
             plt.scatter([p.x for p in points], [p.y for p in points], s=10,
-            color=colors[[((y_pr + 1) // 2) for y_pr in y_pred]])
+                        color=colors[[((y_pr + 1) // 2) for y_pr in y_pred]])
         plt.xlim(-7, 7)
         plt.ylim(-7, 7)
         plt.xticks(())
@@ -106,4 +109,6 @@ for i_dataset, X in enumerate(datasets):
         plot_num += 1
 
 # plt.savefig('./output/ad_methods_comparison.pdf')
+
+print("running time: ", time.time() - ss)
 plt.show()

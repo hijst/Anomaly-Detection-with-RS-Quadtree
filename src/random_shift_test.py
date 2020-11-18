@@ -11,7 +11,6 @@ N = 300  # number of points
 # random state 1 blob = 0, 2 blobs = 4, 3 blobs = 3, 42
 base_coords = make_blobs(n_samples=N, n_features=2, center_box=(0, 300), cluster_std=20, random_state=3)[0]
 
-
 # base_coords = 60*make_moons(n_samples=N, noise=0.15, random_state=0)[0]
 
 

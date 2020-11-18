@@ -4,7 +4,7 @@ import numpy as np
 class Point:
     """A point located at (x,y) in 2D space.
 
-    Each Point object may be associated with a payload object.
+    Each Point object may be associated with an anomaly score and outlier classification.
 
     """
 
