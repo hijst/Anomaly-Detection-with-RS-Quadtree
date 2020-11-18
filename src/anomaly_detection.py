@@ -98,7 +98,7 @@ for i_dataset, X in enumerate(datasets):
             plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[(y_pred + 1) // 2])
         else:
             plt.scatter([p.x for p in points], [p.y for p in points], s=10,
-                        color=colors[[((y_pr + 1) // 2) for y_pr in y_pred]])
+                        color=colors[[y_pr for y_pr in y_pred]])
         plt.xlim(-7, 7)
         plt.ylim(-7, 7)
         plt.xticks(())

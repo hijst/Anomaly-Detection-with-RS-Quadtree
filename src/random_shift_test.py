@@ -16,7 +16,6 @@ base_coords = make_blobs(n_samples=N, n_features=2, center_box=(0, 300), cluster
 
 def plot_qt(data):
     ax = plt.subplot()
-    print(data)
 
     colors = np.array(['#b80000', '#377eb8'])
     ax.scatter([p.x for p in data], [p.y for p in data], c=colors[[(p.is_outlier + 1) // 2 for p in data]], s=16)

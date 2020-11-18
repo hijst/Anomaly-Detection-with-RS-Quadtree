@@ -23,8 +23,8 @@ class RSQT:
             random_shift = [0, 0]
         else:
             random_shift = np.random.rand(2) * self.ds
-        # print("random horizontal shift:", round(random_shift[0], 2))
-        # print("random vertical shift:", round(random_shift[1], 2))
+        print("random horizontal shift:", round(random_shift[0], 2))
+        print("random vertical shift:", round(random_shift[1], 2))
 
         # Add a random shift to the point set and generate the points
         coords = [point + random_shift for point in data]
@@ -35,9 +35,8 @@ class RSQT:
         for pt in pts:
             qt.insert(pt)
         for pt in pts:
-            qt.score_depth(pt)  # score based on number of points along a points path from root to leaf
-            # qt.score_depth(pt)  # score based on depth in the tree
-        print('Number of points in the domain =', len(qt))
+            qt.score_depth(pt)  # score based on depth in the tree
+        print('number of points in the domain =', len(qt))
         return qt, pts
 
     def fit_predict(self, data, k=5):
@@ -50,12 +49,12 @@ class RSQT:
             for j in range(len(pnts)):
                 pnts[j].anomaly_score += pts[j].anomaly_score
 
-        pnts.sort(key=lambda x: x.anomaly_score)
-        T = pnts[cutoff].anomaly_score
+        pnts_sorted = sorted(pnts, key=lambda x: x.anomaly_score)
+        T = pnts_sorted[cutoff].anomaly_score
 
         for pnt in pnts:
-            if pnt.anomaly_score <= T:
-                pnt.is_outlier = -1
+            if pnt.anomaly_score < T:
+                pnt.is_outlier = 0
 
         y_pred = []
         for pnt in pnts:
