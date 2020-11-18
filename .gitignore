@@ -105,8 +105,10 @@ celerybeat.pid
 .idea
 .env
 .venv
+.output
 env/
 venv/
+output/
 ENV/
 env.bak/
 venv.bak/

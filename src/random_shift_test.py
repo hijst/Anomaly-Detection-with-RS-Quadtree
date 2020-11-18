@@ -26,7 +26,7 @@ def plot_qt(data):
     # qtree.draw(ax)
 
     colors = np.array(['#b80000', '#377eb8'])
-    ax.scatter([p.x for p in data], [p.y for p in data], c=colors[[(p.payload + 1) // 2 for p in data]], s=16)
+    ax.scatter([p.x for p in data], [p.y for p in data], c=colors[[(p.anomaly_score + 1) // 2 for p in data]], s=16)
     ax.set_xticks([])
     ax.set_yticks([])
 

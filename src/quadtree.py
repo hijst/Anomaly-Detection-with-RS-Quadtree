@@ -8,12 +8,13 @@ class Point:
 
     """
 
-    def __init__(self, x, y, payload=0):
+    def __init__(self, x, y, anomaly_score=0, is_outlier=1):
         self.x, self.y = x, y
-        self.payload = payload
+        self.anomaly_score = anomaly_score
+        self.is_outlier = is_outlier
 
     def __repr__(self):
-        return '{}: {}'.format(str((self.x, self.y)), repr(self.payload))
+        return '{}: {}'.format(str((self.x, self.y)), repr(self.anomaly_score))
 
     def __str__(self):
         return 'P({:.2f}, {:.2f})'.format(self.x, self.y)
@@ -151,7 +152,7 @@ class QuadTree:
             return False
 
         found_points = []
-        point.payload += len(self.query(self.boundary, found_points)) * (4 ** self.depth)
+        point.anomaly_score += len(self.query(self.boundary, found_points)) * (4 ** self.depth)
 
         if self.divided:
             self.ne.score(point)
@@ -159,7 +160,7 @@ class QuadTree:
             self.se.score(point)
             self.sw.score(point)
 
-        return point.payload
+        return point.anomaly_score
 
     def score_depth(self, point):
         """Score a point in the quadtree based on how deep its leaf lies"""
@@ -174,9 +175,9 @@ class QuadTree:
             self.sw.score(point)
 
         else:
-            point.payload += self.depth
+            point.anomaly_score += self.depth
 
-        return point.payload
+        return point.anomaly_score
 
     def query(self, boundary, found_points):
         """Find the points in the quadtree that lie within boundary."""
