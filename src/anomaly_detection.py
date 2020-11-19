@@ -15,8 +15,6 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from src.rsqt_forest import RSQT
 
-print(__doc__)
-
 matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 
 # Example settings
@@ -24,6 +22,7 @@ n_samples = 300
 outliers_fraction = 0.15
 n_outliers = int(outliers_fraction * n_samples)
 n_inliers = n_samples - n_outliers
+acc_res = []
 
 # define outlier/anomaly detection methods to be compared
 anomaly_algorithms = [
@@ -66,11 +65,13 @@ for i_dataset, X in enumerate(datasets):
     # Add outliers
     X = np.concatenate([X, rng.uniform(low=-6, high=6,
                                        size=(n_outliers, 2))], axis=0)
+    c = []
+    t = []
+    count = 0
+    correct = 0
 
     for name, algorithm in anomaly_algorithms:
         t0 = time.time()
-        check = []
-        checker = []
         points = []
         if name != "RSQT Forest":
             algorithm.fit(X)
@@ -84,8 +85,11 @@ for i_dataset, X in enumerate(datasets):
             y_pred = algorithm.fit_predict(X)
         elif name == "RSQT Forest":
             points, y_pred = algorithm.fit_predict(X)
+            t = y_pred
         else:
             y_pred = algorithm.fit(X).predict(X)
+            if name == "Isolation Forest":
+                c = y_pred
         # plot the levels lines and the points
         if name not in ["Local Outlier Factor", "RSQT Forest"]:  # LOF does not implement predict
             Z = algorithm.predict(np.c_[xx.ravel(), yy.ravel()])
@@ -108,7 +112,18 @@ for i_dataset, X in enumerate(datasets):
                  horizontalalignment='right')
         plot_num += 1
 
+    # calculate percentage of correct predictions
+    for i in range(len(c)):
+        if c[i] == -1:
+            count +=1
+            if t[i] == 0:
+                correct += 1
+    acc_res.append(100 * correct / count)
+
 # plt.savefig('./output/ad_methods_comparison.pdf')
 
-print("running time: ", time.time() - ss)
+for i in range(len(datasets)):
+    print("percentage of same predictions for method {}: {:.2f} ".format(i, acc_res[i]), "%")
+print("running time: {:.2f}".format(time.time() - ss), "s")
+
 plt.show()
