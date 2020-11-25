@@ -39,7 +39,7 @@ class RSQT:
         print('number of points in the domain =', len(qt))
         return qt, pts
 
-    def fit_predict(self, data, k=5):
+    def fit_predict(self, data, k=20):
         cutoff = int(len(data) * self.contamination)
 
         qtree, pnts = self.fill_quadtree(data, rs=0)

@@ -9,7 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from sklearn import svm
-from sklearn.datasets import make_moons, make_blobs
+from sklearn.datasets import make_moons, make_blobs, make_circles
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
@@ -22,7 +22,7 @@ n_samples = 300
 outliers_fraction = 0.15
 n_outliers = int(outliers_fraction * n_samples)
 n_inliers = n_samples - n_outliers
-acc_res = []
+acc_res = []  # for the accuracy results
 
 # define outlier/anomaly detection methods to be compared
 anomaly_algorithms = [
@@ -35,18 +35,60 @@ anomaly_algorithms = [
         n_neighbors=35, contamination=outliers_fraction)),
     ("RSQT Forest", RSQT(contamination=outliers_fraction))]
 
+# generate custom datasets
+lines = []
+dom = 3
+for i in range(int(n_inliers / 2)):
+    lines.append([dom * np.random.randn(), dom])
+    lines.append([dom * np.random.randn(), -dom])
+
+rectangles = []
+for i in range(int(n_inliers/12)):
+    rectangles.append([np.random.randn(), 2])
+    rectangles.append([np.random.randn(), -2])
+    rectangles.append([2, np.random.randn()])
+    rectangles.append([-2, np.random.randn()])
+for i in range(int(n_inliers / 6)):
+    rectangles.append([2. * np.random.randn(), 4])
+    rectangles.append([2. * np.random.randn(), -4])
+    rectangles.append([4, 2. * np.random.randn()])
+    rectangles.append([-4, 2. * np.random.randn()])
+
+plus = []
+for i in range(int(n_inliers/2)+1):
+    plus.append([2. * np.random.randn(), 0.1 * np.random.randn()])
+    plus.append([0.1 * np.random.randn(), 2. * np.random.randn()])
+
+t_sign = []
+for i in range(int(n_inliers/2)):
+    t_sign.append([2. * np.random.randn(), 3 + 0.1 * np.random.randn()])
+    t_sign.append([0.1 * np.random.randn(), 2. * np.random.randn()])
+
+big_small_blob = make_blobs(centers=[[0, 0], [5, 5]], n_samples=[int(n_inliers * 0.8), int(n_inliers * 0.2)],
+                            n_features=2, cluster_std=[2., .2])[0]
+
 # Define datasets
 blobs_params = dict(random_state=0, n_samples=n_inliers, n_features=2)
 datasets = [
-    make_blobs(centers=[[0, 0], [0, 0]], cluster_std=0.5,
-               **blobs_params)[0],
-    make_blobs(centers=[[2, 2], [-2, -2]], cluster_std=[0.5, 0.5],
-               **blobs_params)[0],
-    make_blobs(centers=[[2, 2], [-2, -2]], cluster_std=[1.5, .3],
-               **blobs_params)[0],
-    4. * (make_moons(n_samples=n_samples, noise=.05, random_state=0)[0] -
-          np.array([0.5, 0.25])),
-    14. * (np.random.RandomState(42).rand(n_samples, 2) - 0.5)]
+    np.concatenate((6. * make_circles(n_samples=int(n_inliers / 2), factor=0.8)[0],
+                    3. * make_circles(n_samples=int(n_inliers / 2),
+                                      factor=0.5)[0])),
+    rectangles,
+    big_small_blob,
+    plus,
+    t_sign
+    # make_blobs(centers=[[0, 0], [0, 0]], cluster_std=0.5,
+    # **blobs_params)[0],
+    # 5. * make_circles(n_samples=n_inliers, factor=0.6)[0],
+    # make_blobs(centers=[[2, 2], [-2, -2]], cluster_std=[0.5, 0.5],
+    # **blobs_params)[0],
+    # make_blobs(centers=[[2, 2], [-2, -2]], cluster_std=[1.5, .3],
+    # **blobs_params)[0],
+    # 4. * (make_moons(n_samples=n_inliers, noise=.05, random_state=0)[0] -
+    # np.array([0.5, 0.25])),
+    # 14. * (np.random.RandomState(42).rand(n_samples, 2) - 0.5)
+    # lines]
+]
 
 # Compare given classifiers under given settings
 xx, yy = np.meshgrid(np.linspace(-7, 7, 150),
@@ -115,15 +157,15 @@ for i_dataset, X in enumerate(datasets):
     # calculate percentage of correct predictions
     for i in range(len(c)):
         if c[i] == -1:
-            count +=1
+            count += 1
             if t[i] == 0:
                 correct += 1
     acc_res.append(100 * correct / count)
 
-# plt.savefig('./output/ad_methods_comparison.pdf')
+plt.savefig('../output/methods_comparison2.pdf')
 
 for i in range(len(datasets)):
-    print("percentage of same predictions for method {}: {:.2f} ".format(i, acc_res[i]), "%")
+    print("percentage of same predictions for dataset {}: {:.2f} ".format(i + 1, acc_res[i]), "%")
 print("running time: {:.2f}".format(time.time() - ss), "s")
 
 plt.show()
