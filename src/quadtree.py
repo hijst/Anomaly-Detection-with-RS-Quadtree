@@ -125,8 +125,28 @@ class QuadTree:
 
         self.divided = True
 
+        if self.points:
+            for point in self.points:
+                self.nw.insert(point)
+                self.ne.insert(point)
+                self.sw.insert(point)
+                self.se.insert(point)
+                self.points.remove(point)
+
+    def collapse(self):
+        """Undo the dividing of a cell by removing its 4 children nodes and resetting the divided attribute"""
+        self.points.append(self.nw.points)
+        self.points.append(self.ne.points)
+        self.points.append(self.se.points)
+        self.points.append(self.sw.points)
+        del self.ne
+        del self.nw
+        del self.se
+        del self.sw
+        self.divided = False
+
     def insert(self, point):
-        """Try to insert Point point into this QuadTree."""
+        """Try to insert Point point into this quadtree."""
 
         if not self.boundary.contains(point):
             # The point does not lie inside boundary: bail.
@@ -144,6 +164,24 @@ class QuadTree:
                 self.nw.insert(point) or
                 self.se.insert(point) or
                 self.sw.insert(point))
+
+    def delete(self, point):
+        """Delete a point from the quadtree and update the regions"""
+
+        if not self.boundary.contains(point):
+            return False
+
+        if self.divided:
+            self.ne.delete(point)
+            self.nw.delete(point)
+            self.se.delete(point)
+            self.sw.delete(point)
+
+        if point in self.points:
+            self.points.remove(point)
+
+        #if self.divided and len(self.query(self.boundary, [])) <= self.max_points:
+            #self.collapse()
 
     def score(self, point):
         """Score a point in the quadtree based on how many points are in its regions"""

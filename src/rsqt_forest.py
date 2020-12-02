@@ -1,8 +1,6 @@
 import numpy as np
 from src.quadtree import Point, Rect, QuadTree
-
-
-width, height = 600, 600
+import pyspark as ps
 
 
 class RSQT:
@@ -60,3 +58,25 @@ class RSQT:
         for pnt in pnts:
             y_pred.append(pnt.is_outlier)
         return pnts, y_pred
+
+    def fit_predict_qt(self, data, k=20):
+        cutoff = int(len(data) * self.contamination)
+
+        qtree, pnts = self.fill_quadtree(data, rs=0)
+
+        for i in range(k - 1):
+            qt, pts = self.fill_quadtree(data)
+            for j in range(len(pnts)):
+                pnts[j].anomaly_score += pts[j].anomaly_score
+
+        pnts_sorted = sorted(pnts, key=lambda x: x.anomaly_score)
+        T = pnts_sorted[cutoff].anomaly_score
+
+        for pnt in pnts:
+            if pnt.anomaly_score < T:
+                pnt.is_outlier = 0
+
+        y_pred = []
+        for pnt in pnts:
+            y_pred.append(pnt.is_outlier)
+        return pnts, y_pred, qtree

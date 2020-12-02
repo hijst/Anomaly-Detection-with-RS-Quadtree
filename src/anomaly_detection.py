@@ -44,25 +44,25 @@ for i in range(int(n_inliers / 2)):
 
 rectangles = []
 for i in range(int(n_inliers/12)):
-    rectangles.append([np.random.randn(), 2])
-    rectangles.append([np.random.randn(), -2])
-    rectangles.append([2, np.random.randn()])
-    rectangles.append([-2, np.random.randn()])
+    rectangles.append([4. * (np.random.random() - 0.5), 2])
+    rectangles.append([4. * (np.random.random() - 0.5), -2])
+    rectangles.append([2, 4. * (np.random.random() - 0.5)])
+    rectangles.append([-2, 4. * (np.random.random() - 0.5)])
 for i in range(int(n_inliers / 6)):
-    rectangles.append([2. * np.random.randn(), 4])
-    rectangles.append([2. * np.random.randn(), -4])
-    rectangles.append([4, 2. * np.random.randn()])
-    rectangles.append([-4, 2. * np.random.randn()])
+    rectangles.append([8. * (np.random.random() - 0.5), 4])
+    rectangles.append([8. * (np.random.random() - 0.5), -4])
+    rectangles.append([4, 8. * (np.random.random() - 0.5)])
+    rectangles.append([-4, 8. * (np.random.random() - 0.5)])
 
 plus = []
 for i in range(int(n_inliers/2)+1):
-    plus.append([2. * np.random.randn(), 0.1 * np.random.randn()])
-    plus.append([0.1 * np.random.randn(), 2. * np.random.randn()])
+    plus.append([10. * (np.random.random() - 0.5), 0.1 * np.random.randn()])
+    plus.append([0.1 * np.random.randn(), 10. * (np.random.random() - 0.5)])
 
 t_sign = []
 for i in range(int(n_inliers/2)):
-    t_sign.append([2. * np.random.randn(), 3 + 0.1 * np.random.randn()])
-    t_sign.append([0.1 * np.random.randn(), 2. * np.random.randn()])
+    t_sign.append([8. * (np.random.random() - 0.5), 4 + 0.1 * np.random.randn()])
+    t_sign.append([0.1 * np.random.randn(), 8. * (np.random.random() - 0.5)])
 
 big_small_blob = make_blobs(centers=[[0, 0], [5, 5]], n_samples=[int(n_inliers * 0.8), int(n_inliers * 0.2)],
                             n_features=2, cluster_std=[2., .2])[0]
@@ -162,7 +162,7 @@ for i_dataset, X in enumerate(datasets):
                 correct += 1
     acc_res.append(100 * correct / count)
 
-plt.savefig('../output/methods_comparison2.pdf')
+# plt.savefig('../output/methods_comparison4.pdf')
 
 for i in range(len(datasets)):
     print("percentage of same predictions for dataset {}: {:.2f} ".format(i + 1, acc_res[i]), "%")

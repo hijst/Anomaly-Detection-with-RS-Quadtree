@@ -28,8 +28,16 @@ def plot_qt(data):
 
 
 clf = RSQT()
-points = clf.fit_predict(base_coords)[0]
+points, y_pred, qtree = clf.fit_predict_qt(base_coords)
+
+for point in points:
+    if point.is_outlier == 0:
+        qtree.delete(point)
+        print("removed")
+
+points = qtree.query(qtree.boundary, [])
 
 print("--- running time: %s seconds ---" % (round(time.time() - start_time, 2)))
 
+print(len(points))
 plot_qt(points)
