@@ -70,6 +70,7 @@ big_small_blob = make_blobs(centers=[[0, 0], [5, 5]], n_samples=[int(n_inliers *
 # Define datasets
 blobs_params = dict(random_state=0, n_samples=n_inliers, n_features=2)
 datasets = [
+    6. * make_circles(n_samples=n_inliers)[0],
     np.concatenate((6. * make_circles(n_samples=int(n_inliers / 2), factor=0.8)[0],
                     3. * make_circles(n_samples=int(n_inliers / 2),
                                       factor=0.5)[0])),

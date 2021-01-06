@@ -8,10 +8,11 @@ class Point:
 
     """
 
-    def __init__(self, x, y, anomaly_score=0, is_outlier=1):
+    def __init__(self, x, y, anomaly_score=0, is_outlier=1, container=None):
         self.x, self.y = x, y
         self.anomaly_score = anomaly_score
         self.is_outlier = is_outlier
+        self.container = container
 
     def __repr__(self):
         return '{}: {}'.format(str((self.x, self.y)), repr(self.anomaly_score), repr(self.is_outlier))
@@ -71,7 +72,7 @@ class Rect:
 class QuadTree:
     """A class implementing a quadtree."""
 
-    def __init__(self, boundary, max_points=1, depth=0, domain=0):
+    def __init__(self, boundary, max_points=1, depth=0, domain=0, parent=None):
         """Initialize this node of the quadtree.
 
         boundary is a Rect object defining the region from which points are
@@ -85,6 +86,7 @@ class QuadTree:
         self.max_points = max_points
         self.points = []
         self.depth = depth
+        self.parent = parent
         # A flag to indicate whether this node has divided (branched) or not.
         self.divided = False
 
@@ -112,18 +114,16 @@ class QuadTree:
         #     point.payload += len(self.points)
 
         self.nw = QuadTree(Rect(cx - w / 2, cy - h / 2, w, h),
-                           self.max_points, self.depth + 1)
+                           self.max_points, self.depth + 1, parent=self)
 
         self.ne = QuadTree(Rect(cx + w / 2, cy - h / 2, w, h),
-                           self.max_points, self.depth + 1)
+                           self.max_points, self.depth + 1, parent=self)
 
         self.se = QuadTree(Rect(cx + w / 2, cy + h / 2, w, h),
-                           self.max_points, self.depth + 1)
+                           self.max_points, self.depth + 1, parent=self)
 
         self.sw = QuadTree(Rect(cx - w / 2, cy + h / 2, w, h),
-                           self.max_points, self.depth + 1)
-
-        self.divided = True
+                           self.max_points, self.depth + 1, parent=self)
 
         if self.points:
             for point in self.points:
@@ -133,16 +133,43 @@ class QuadTree:
                 self.se.insert(point)
                 self.points.remove(point)
 
+        self.divided = True
+
+    def e_divide(self):
+        """Divide (branch) this node by spawning four children nodes."""
+
+        cx, cy = self.boundary.cx, self.boundary.cy
+        w, h = self.boundary.w / 2, self.boundary.h / 2
+        # The boundaries of the four children nodes are "northwest",
+        # "northeast", "southeast" and "southwest" quadrants within the
+        # boundary of the current node.
+
+        # for point in self.points:
+        #     point.payload += len(self.points)
+
+        self.nw = QuadTree(Rect(cx - w / 2, cy - h / 2, w, h),
+                           self.max_points, self.depth + 1, parent=self)
+
+        self.ne = QuadTree(Rect(cx + w / 2, cy - h / 2, w, h),
+                           self.max_points, self.depth + 1, parent=self)
+
+        self.se = QuadTree(Rect(cx + w / 2, cy + h / 2, w, h),
+                           self.max_points, self.depth + 1, parent=self)
+
+        self.sw = QuadTree(Rect(cx - w / 2, cy + h / 2, w, h),
+                           self.max_points, self.depth + 1, parent=self)
+
+        self.divided = True
+
     def collapse(self):
         """Undo the dividing of a cell by removing its 4 children nodes and resetting the divided attribute"""
-        self.points.append(self.nw.points)
-        self.points.append(self.ne.points)
-        self.points.append(self.se.points)
-        self.points.append(self.sw.points)
-        del self.ne
-        del self.nw
-        del self.se
-        del self.sw
+        self.points.extend(self.nw.points)
+        self.points.extend(self.ne.points)
+        self.points.extend(self.sw.points)
+        self.points.extend(self.se.points)
+        for point in self.points:
+            point.container = self
+        del self.nw, self.ne, self.sw, self.se
         self.divided = False
 
     def insert(self, point):
@@ -151,9 +178,10 @@ class QuadTree:
         if not self.boundary.contains(point):
             # The point does not lie inside boundary: bail.
             return False
-        if len(self.points) < self.max_points:
+        if not self.divided and len(self.points) < self.max_points:
             # There's room for our point without dividing the QuadTree.
             self.points.append(point)
+            point.container = self
             return True
 
         # No room: divide if necessary, then try the sub-quads.
@@ -179,9 +207,14 @@ class QuadTree:
 
         if point in self.points:
             self.points.remove(point)
+            del point
 
-        #if self.divided and len(self.query(self.boundary, [])) <= self.max_points:
-            #self.collapse()
+        if self.divided and not (self.nw.divided or self.ne.divided or self.sw.divided or self.se.divided):
+            if len(self.nw.points) + len(self.ne.points) + len(self.sw.points) +\
+               len(self.se.points) <= self.max_points:
+                self.collapse()
+                print("collapsed")
+                return True
 
     def score(self, point):
         """Score a point in the quadtree based on how many points are in its regions"""
@@ -279,6 +312,9 @@ class QuadTree:
         if self.divided:
             npoints += len(self.nw) + len(self.ne) + len(self.se) + len(self.sw)
         return npoints
+
+    def points_in(self):
+        return self.query(self.boundary, [])
 
     def draw(self, ax):
         """Draw a representation of the quadtree on Matplotlib Axes ax."""
