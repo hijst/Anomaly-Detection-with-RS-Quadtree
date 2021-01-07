@@ -169,6 +169,7 @@ class QuadTree:
         self.points.extend(self.se.points)
         for point in self.points:
             point.container = self
+            point.anomaly_score = self.depth
         del self.nw, self.ne, self.sw, self.se
         self.divided = False
 
@@ -182,6 +183,7 @@ class QuadTree:
             # There's room for our point without dividing the QuadTree.
             self.points.append(point)
             point.container = self
+            point.anomaly_score = self.depth
             return True
 
         # No room: divide if necessary, then try the sub-quads.
