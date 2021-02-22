@@ -63,7 +63,7 @@ class Rect:
                     other.north_edge > self.south_edge or
                     other.south_edge < self.north_edge)
 
-    def draw(self, ax, c='k', lw=1, **kwargs):
+    def draw(self, ax, c='k', lw=0.2, **kwargs):
         x1, y1 = self.west_edge, self.north_edge
         x2, y2 = self.east_edge, self.south_edge
         ax.plot([x1, x2, x2, x1, x1], [y1, y1, y2, y2, y1], c=c, lw=lw, **kwargs)

@@ -1,11 +1,10 @@
 import numpy as np
 from src.quadtree import Point, Rect, QuadTree
-import pyspark as ps
 
 
 class RSQT:
 
-    def __init__(self, contamination=0.10, ds=0):
+    def __init__(self, contamination=0.1, ds=0):
         self.points = []
         self.contamination = contamination
         self.ds = ds
@@ -13,8 +12,8 @@ class RSQT:
     def fill_quadtree(self, data, rs=1):
         """Apply random shift to points, then fill the quadtree with the points and score the points."""
 
-        #mn = np.amin(data)
-        #mx = np.amax(data)
+        # mn = np.amin(data)
+        # mx = np.amax(data)
         mn = -8
         mx = 8
         self.ds = int((mx - mn)) + 1
@@ -34,8 +33,6 @@ class RSQT:
         qt = QuadTree(domain, 1)
         for pt in pts:
             qt.insert(pt)
-        for pt in pts:
-            qt.score_depth(pt)  # score based on depth in the tree
         print('number of points in the domain =', len(qt))
         return qt, pts
 
@@ -66,7 +63,7 @@ class RSQT:
         if depth == 0:
             return merged_quadtree
 
-    def fit_predict(self, data, k=10):
+    def fit_predict(self, data, k=32):
         cutoff = int(len(data) * self.contamination)
 
         qtree, pnts = self.fill_quadtree(data, rs=0)
@@ -88,7 +85,7 @@ class RSQT:
             y_pred.append(pnt.is_outlier)
         return pnts, y_pred
 
-    def fit_predict_qt(self, data, k=10):
+    def fit_predict_qt(self, data, k=32):
         cutoff = int(len(data) * self.contamination)
 
         qtree, pnts = self.fill_quadtree(data, rs=0)
@@ -113,8 +110,6 @@ class RSQT:
     def predict(self, qt):
         pts = qt.query(qt.boundary, [])
         cutoff = int(len(pts) * self.contamination)
-        for point in pts:
-            qt.score_depth(point)
 
         pnts_sorted = sorted(pts, key=lambda x: x.anomaly_score)
         T = pnts_sorted[cutoff].anomaly_score
