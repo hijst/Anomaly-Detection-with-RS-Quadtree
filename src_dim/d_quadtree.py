@@ -57,6 +57,7 @@ class NDQuadTree:
         self.children = children
         self.parent = parent
         self.divided = False
+        self.points_inside = []
 
     def __str__(self):
         s = str(self.hc)
@@ -101,7 +102,7 @@ class NDQuadTree:
 
         if len(self.points) > 0:
             for p in self.points:
-                fitting_child = next(x for x in self.children if x.has_in(p))
+                fitting_child = next((x for x in self.children if x.has_in(p)), self)
                 fitting_child.insert(p)
             self.points.remove(p)
 
@@ -116,6 +117,9 @@ class NDQuadTree:
             print("error: trying to insert point that is outside domain of tree")
             return False
 
+        if self.depth == 0:
+            self.points_inside.append(p)
+
         if len(self.points) < self.max_points and not self.divided:
             self.points.append(p)
             p.anomaly_score = self.depth
@@ -129,36 +133,3 @@ class NDQuadTree:
         fitting_child = next(x for x in self.children if x.has_in(p))
         fitting_child.insert(p)
         return True
-
-big_small_blob = make_blobs(centers=[[0, 0, 0, 0], [2, 2, 2, 2]], n_samples=[1000, 10],
-                            n_features=3, cluster_std=[.2, .2])[0]
-
-qt = NDQuadTree(hc=Hypercube([0.0, 0.0, 0.0, 0.0], 20.0))
-#points = [Point([1.0, 1.0, 1.0, 1.0, 1.0]), Point([2.0, 2.0, 2.0, 2.0, 2.0]), Point([2.5, 2.5, 2.5, 2.5, 2.5])]
-
-points = [Point(coord) for coord in big_small_blob]
-for point in points:
-    qt.insert(point)
-
-print(str(qt))
-
-
-def predict(pts):
-    cutoff = int(len(pts) * 0.01)
-
-    pnts_sorted = sorted(pts, key=lambda x: x.anomaly_score)
-    T = pnts_sorted[cutoff].anomaly_score
-
-    for pnt in pts:
-        if pnt.anomaly_score <= T:
-            pnt.is_outlier = 0
-        else:
-            pnt.is_outlier = 1
-    return pts
-
-predict(points)
-
-for point in points:
-    if point.is_outlier == 0:
-        print(point)
-        print(point.anomaly_score)
