@@ -1,4 +1,3 @@
-import itertools as it
 import scipy.spatial.distance as spd
 
 
@@ -24,30 +23,31 @@ class Point:
 
 
 class Hypercube:
-    """A Hypercube that has the same side length in all dimensions"""
+    """A Hypercube that possibly has different side lengths in all dimensions"""
 
-    def __init__(self, center, radius):
+    def __init__(self, center, radii):
         self.center = center
-        self.radius = radius
+        self.radii = radii
 
     def __str__(self):
-        return 'center: ' + str(self.center) + ' radius: ' + str(self.radius)
+        return 'center: ' + str(self.center) + ' radii: ' + str(self.radii)
 
 
-class NDQuadTree:
+class RDQuadTree:
     """A QuadTree with an arbitrary number of dimensions, which splits in every dimension on every split
 
     Therefore the number of data points needs to be much larger than the number of dimensions (2^d) to be of
     any practical use.
     """
 
-    def __init__(self, hc, max_points=1, depth=0, parent=None, max_depth=25):
+    def __init__(self, hc, max_points=1, depth=0, parent=None, max_depth=20, root=None):
         """Initialize this node of the quadtree.
 
         hc is the hypercube that defines the boundary of the node
 
         """
 
+        self.root = root
         self.hc = hc
         self.max_points = max_points
         self.points = []
@@ -57,6 +57,9 @@ class NDQuadTree:
         self.divided = False
         self.points_inside = []
         self.max_depth = max_depth
+        self.divisions = 0
+        if self.depth == 0:
+            self.root = self
 
     def __str__(self):
         s = str(self.hc)
@@ -71,33 +74,25 @@ class NDQuadTree:
 
     def has_in(self, point):
         for i in range(len(point.coordinates)):
-            if spd.cityblock(point.coordinates[i], self.hc.center[i]) > self.hc.radius:
+            if spd.cityblock(point.coordinates[i], self.hc.center[i]) > self.hc.radii[i]:
                 return False
         return True
 
     def divide(self):
-        """Divide (branch) this node by spawning 2^d children nodes."""
+        """Divide this node by spawning 2 children nodes."""
 
-        radius = self.hc.radius / 2
         dimensions = len(self.hc.center)
-        combinator = []
-        child_centers = []
-        for i in range(dimensions):
-            combinator.append(i)
-        for i in range(dimensions + 1):
-            child_centers.extend(it.combinations(combinator, i))
-        children_centers = []
-        for child_center in child_centers:
-            child_c = []
-            for i in range(dimensions):
-                if i in child_center:
-                    child_c.append(self.hc.center[i] + radius)
-                else:
-                    child_c.append(self.hc.center[i] - radius)
-            children_centers.append(child_c)
-        for child in children_centers:
-            hypercube = Hypercube(child, radius)
-            self.children.append(NDQuadTree(hc=hypercube, depth=self.depth + 1, parent=self))
+        rd = self.depth % dimensions
+        c1 = Hypercube(self.hc.center.copy(), self.hc.radii.copy())
+        c1.radii[rd] = c1.radii[rd] / 2
+        c1.center[rd] += (c1.radii[rd])
+        c2 = Hypercube(self.hc.center.copy(), self.hc.radii.copy())
+        c2.radii[rd] = c2.radii[rd] / 2
+        c2.center[rd] -= (c2.radii[rd])
+        self.children.append(RDQuadTree(hc=c1, depth=self.depth + 1, max_points=self.max_points, parent=self,
+                                        root=self.root))
+        self.children.append(RDQuadTree(hc=c2, depth=self.depth + 1, max_points=self.max_points, parent=self,
+                                        root=self.root))
 
         if len(self.points) > 0:
             for p in self.points:
@@ -109,6 +104,8 @@ class NDQuadTree:
                     print("error, none of the children seems to be able to fit the point", p)
 
         self.divided = True
+        self.root.divisions += 1
+        return True
 
     def insert(self, p):
         """Inserting a point with n dimensions into the n-dimensional tree
@@ -143,3 +140,4 @@ class NDQuadTree:
         else:
             print("error, none of the children seems to be able to fit the point", p, self.depth)
         return True
+

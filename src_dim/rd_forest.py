@@ -1,8 +1,8 @@
-from src_dim.d_quadtree import NDQuadTree, Point, Hypercube
+from src_dim.rd_quadtree import RDQuadTree, Point, Hypercube
 import numpy as np
 
 
-class NDForest:
+class RDForest:
     """Forest of ND trees, where scores are accumulated to form a measure of anomalousness.
 
     includes a fit and a predict method, contamination can be set to define number of outliers.
@@ -26,9 +26,12 @@ class NDForest:
             mxd = mx + rn  # max of hypercube
             cnv = (mn + mxd) / 2  # center value
             cn = [cnv] * self.dimensions  # center coordinates
-            self.domain = Hypercube(cn, rn)  # hypercube to contain all (shifted) points
+            rns = [rn] * self.dimensions
+            self.domain = Hypercube(cn, rns)  # hypercube to contain all (shifted) points
             for i in range(k):
-                self.trees.append(NDQuadTree(self.domain))
+                self.trees.append(RDQuadTree(self.domain, max_points=i+2))
+
+            print("max points per tree: ", [tree.max_points for tree in self.trees])
 
     def fit(self):
         """converts the coordinates to point objects and inserts them into k trees with random shifts."""
@@ -37,12 +40,14 @@ class NDForest:
         base_pts = [Point(base_coord) for base_coord in base_coords]
         for base_pt in base_pts:
             self.trees[0].insert(base_pt)
+        print("divisions: ", self.trees[0].divisions)
         for tree in self.trees[1:]:
-            random_shift = np.random.rand(self.dimensions) * self.domain.radius
+            random_shift = np.random.rand(self.dimensions) * self.domain.radii[0]
             coords = [point + random_shift for point in self.points]
             pts = [Point(coord) for coord in coords]
             for pt in pts:
                 tree.insert(pt)
+            print("divisions: ", tree.divisions)
         self.fitted = True
 
     def predict(self):
