@@ -1,5 +1,6 @@
 from src_dim.rd_quadtree import RDQuadTree, Point, Hypercube
 import numpy as np
+import time
 
 
 class RDForest:
@@ -29,7 +30,7 @@ class RDForest:
             rns = [rn] * self.dimensions
             self.domain = Hypercube(cn, rns)  # hypercube to contain all (shifted) points
             for i in range(k):
-                self.trees.append(RDQuadTree(self.domain, max_points=i+2))
+                self.trees.append(RDQuadTree(self.domain, max_points=i+1))
 
             print("max points per tree: ", [tree.max_points for tree in self.trees])
 
@@ -42,17 +43,19 @@ class RDForest:
             self.trees[0].insert(base_pt)
         print("divisions: ", self.trees[0].divisions)
         for tree in self.trees[1:]:
+
             random_shift = np.random.rand(self.dimensions) * self.domain.radii[0]
             coords = [point + random_shift for point in self.points]
             pts = [Point(coord) for coord in coords]
+            starttime = time.time()
             for pt in pts:
                 tree.insert(pt)
+            print("time to fit this tree: ", time.time() - starttime)
             print("divisions: ", tree.divisions)
         self.fitted = True
 
     def predict(self):
         """combine the scores from all trees and return the points with lowest attached scores"""
-
         if not self.fitted:
             print("Not fitted, fit the algorithm first")
             return False

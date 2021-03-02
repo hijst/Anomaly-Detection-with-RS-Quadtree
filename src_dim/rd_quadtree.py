@@ -1,5 +1,3 @@
-import scipy.spatial.distance as spd
-
 
 class Point:
     """A point located in d-dimensional space
@@ -40,7 +38,7 @@ class RDQuadTree:
     any practical use.
     """
 
-    def __init__(self, hc, max_points=1, depth=0, parent=None, max_depth=20, root=None):
+    def __init__(self, hc, max_points=1, depth=0, parent=None, max_depth=30, root=None):
         """Initialize this node of the quadtree.
 
         hc is the hypercube that defines the boundary of the node
@@ -74,7 +72,7 @@ class RDQuadTree:
 
     def has_in(self, point):
         for i in range(len(point.coordinates)):
-            if spd.cityblock(point.coordinates[i], self.hc.center[i]) > self.hc.radii[i]:
+            if abs(point.coordinates[i] - self.hc.center[i]) > self.hc.radii[i]:
                 return False
         return True
 
@@ -96,7 +94,11 @@ class RDQuadTree:
 
         if len(self.points) > 0:
             for p in self.points:
-                fitting_child = next((x for x in self.children if x.has_in(p)), None)
+                fitting_child = None
+                if self.children[0].has_in(p):
+                    fitting_child = self.children[0]
+                elif self.children[1].has_in(p):
+                    fitting_child = self.children[1]
                 if fitting_child:
                     fitting_child.insert(p)
                     self.points.remove(p)
@@ -134,7 +136,11 @@ class RDQuadTree:
         if not self.divided:
             self.divide()
 
-        fitting_child = next((x for x in self.children if x.has_in(p)), None)
+        fitting_child = None
+        if self.children[0].has_in(p):
+            fitting_child = self.children[0]
+        elif self.children[1].has_in(p):
+            fitting_child = self.children[1]
         if fitting_child:
             fitting_child.insert(p)
         else:
