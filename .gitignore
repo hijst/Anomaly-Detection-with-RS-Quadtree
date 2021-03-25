@@ -109,6 +109,8 @@ celerybeat.pid
 env/
 venv/
 output/
+data/
+graph_output/
 ENV/
 env.bak/
 venv.bak/
