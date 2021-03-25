@@ -1,10 +1,8 @@
 import numpy as np
-from src_dim.d_quadtree import NDQuadTree, Point, Hypercube
-from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 from prettytable import PrettyTable
 from sklearn.datasets import make_blobs, make_swiss_roll
-from src_dim.ndforest import NDForest
+from src.ndforest import NDForest
 from sklearn import datasets
 
 ct = 0.1

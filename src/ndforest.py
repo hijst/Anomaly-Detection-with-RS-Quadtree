@@ -1,4 +1,4 @@
-from src_dim.d_quadtree import NDQuadTree, Point, Hypercube
+from src.d_quadtree import NDQuadTree, Point, Hypercube
 import numpy as np
 
 

@@ -55,10 +55,13 @@ class RDQuadTree:
         self.children = []
         self.parent = parent
         self.divided = False
+        self.clean_divided = False
         self.points_inside = []
         self.max_depth = max_depth
         self.divisions = 0
         self.order = order
+        self.random_shift = 0
+        self.penalty = math.ceil(math.log(self.max_depth, 2))
         if self.depth == 0:
             self.root = self
 
@@ -146,4 +149,50 @@ class RDQuadTree:
             fitting_child.insert(p)
         else:
             print("error, none of the children seems to be able to fit the point", p, self.depth)
+        return True
+
+    def clean_insert(self, p):
+        """Inserting a point with n dimensions into the n-dimensional tree
+                We split in all dimensions when there is no room for the point.
+                """
+
+        if self.depth == 0:
+            self.points_inside.append(p)
+
+        if self.depth == self.max_depth:
+            p.anomaly_score = self.depth + self.penalty
+            return True
+
+        if len(self.points) < self.max_points and not self.divided:
+            p.anomaly_score = self.depth
+            return True
+
+        if not self.divided and not self.clean_divided:
+            self.clean_divide()
+
+        rd = self.order[self.depth]
+        if abs(p.coordinates[rd] - self.children[0].hc.center[rd]) <= self.children[0].hc.radii[rd]:
+            fitting_child = self.children[0]
+        else:
+            fitting_child = self.children[1]
+
+        fitting_child.clean_insert(p)
+
+    def clean_divide(self):
+        """Divide this node by spawning 2 children nodes."""
+
+        rd = self.order[self.depth]
+        c1 = Hypercube(self.hc.center.copy(), self.hc.radii.copy())
+        c1.radii[rd] = c1.radii[rd] / 2
+        c1.center[rd] += (c1.radii[rd])
+        c2 = Hypercube(self.hc.center.copy(), self.hc.radii.copy())
+        c2.radii[rd] = c2.radii[rd] / 2
+        c2.center[rd] -= (c2.radii[rd])
+        self.children.append(RDQuadTree(hc=c1, depth=self.depth + 1, max_points=self.max_points, parent=self,
+                                        root=self.root, order=self.order, max_depth=self.max_depth))
+        self.children.append(RDQuadTree(hc=c2, depth=self.depth + 1, max_points=self.max_points, parent=self,
+                                        root=self.root, order=self.order, max_depth=self.max_depth))
+
+        self.clean_divided = True
+        self.root.divisions += 1
         return True
