@@ -72,7 +72,7 @@ class Rect:
 class QuadTree:
     """A class implementing a quadtree."""
 
-    def __init__(self, boundary, max_points=1, depth=0, domain=0, parent=None):
+    def __init__(self, boundary, max_points=2, depth=0, domain=0, parent=None):
         """Initialize this node of the quadtree.
 
         boundary is a Rect object defining the region from which points are

@@ -30,7 +30,7 @@ class RSQT:
         pts = [Point(*coord) for coord in coords]
 
         domain = Rect(mx, mx, 2 * self.ds, 2 * self.ds)
-        qt = QuadTree(domain, 1)
+        qt = QuadTree(domain, max_points=2)
         for pt in pts:
             qt.insert(pt)
         print('number of points in the domain =', len(qt))
@@ -63,7 +63,7 @@ class RSQT:
         if depth == 0:
             return merged_quadtree
 
-    def fit_predict(self, data, k=32):
+    def fit_predict(self, data, k=100):
         cutoff = int(len(data) * self.contamination)
 
         qtree, pnts = self.fill_quadtree(data, rs=0)
@@ -85,7 +85,7 @@ class RSQT:
             y_pred.append(pnt.is_outlier)
         return pnts, y_pred
 
-    def fit_predict_qt(self, data, k=32):
+    def fit_predict_qt(self, data, k=100):
         cutoff = int(len(data) * self.contamination)
 
         qtree, pnts = self.fill_quadtree(data, rs=0)

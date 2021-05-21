@@ -21,7 +21,7 @@ os.environ["PATH"] += os.pathsep + 'C:/Program Files/Graphviz/bin'
 # contamination in dataset
 ct = [0.005]
 # ct = [0.075]
-ct2 = 0.005
+ct2 = 0.0005
 
 
 # HELPER FUNCTIONS ---------------------------------------------------------------------------------------------------
@@ -63,26 +63,34 @@ def plot(ddata):
 def tdplot(data, raw=False):
     plt.figure()
     ax = plt.axes(projection='3d')
-    colors = np.array(['#ff7f00', '#377eb8'])
+    ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 0))
+    ax.w_yaxis.set_pane_color((1.0, 1.0, 1.0, 0))
+    ax.w_zaxis.set_pane_color((1.0, 1.0, 1.0, 0))
+    # colors = np.array(['#ff7f00', '#377eb8'])
+    colors = np.array(['#377eb8', '#ff7f00'])
     if raw:
+        colors = np.array(['#ff7f00', '#377eb8'])
         xs = [x[0] for x in data]
         ys = [y[1] for y in data]
         zs = [z[2] for z in data]
         ax.scatter3D(xs, ys, zs, c=colors[[(int(p[-1]) - 1) // 2 for p in data]])
     else:
+        colors = np.array(['#ff7f00', '#377eb8'])
         xs = [x.coordinates[0] for x in data]
         ys = [y.coordinates[1] for y in data]
         zs = [z.coordinates[2] for z in data]
         ax.scatter3D(xs, ys, zs, c=colors[[(p.is_outlier + 1) // 2 for p in data]])
-    # plt.savefig('../output/massive_data_no_noise.pdf')
+    plt.savefig('../output/smtp/rsf_smtp_anomalies_tb.png')
     plt.show()
 
 
 # DATASETS ------------------------------------------------------------------------------------------------------------
-big_small_blob = make_blobs(centers=[[0, 0, 0], [12, 12, 12]], n_samples=[8000, 1000],
-                            n_features=3, cluster_std=[4.0, 2.0])[0]
+n_points = 500000
+dims = 10
+big_small_blob = make_blobs(centers=[[0] * dims, [12] * dims], n_samples=[int(n_points * 0.9), int(n_points * 0.09)],
+                            n_features=dims, cluster_std=[4.0, 2.0])[0]
 
-smtp = hdf5storage.loadmat('../data/http.mat')
+smtp = hdf5storage.loadmat('../data/smtp.mat')
 smtp_data = (smtp['X']).tolist()
 smtp_answers_raw = smtp['y']
 smtp_answers = [ite[0] for ite in smtp_answers_raw]
@@ -93,12 +101,12 @@ for i, value in enumerate(smtp_data):
 # print(smtp_data_answers)
 smtp_answers = [-1 if ans in [1.0] else 1 for ans in smtp_answers]
 smtp_anomalies = [p for p in smtp_data_answers if p[-1] != 0.0]
-smtp_normal_points_sketch = [p for p in smtp_data_answers if p[-1] == 0.0 and np.random.rand() < 0.01]
+smtp_normal_points_sketch = [p for p in smtp_data_answers if p[-1] == 0.0 and np.random.rand() < .001]
 smtp_anomalies.extend(smtp_normal_points_sketch)
 print(len(smtp_anomalies), smtp_data_answers[0])
-#print(len(set((tuple(x) for x in smtp_anomalies))), set((tuple(x) for x in smtp_anomalies)))
-tdplot(smtp_anomalies, raw=True)
-#tdplot(smtp_data_answers, raw=True)
+# print(len(set((tuple(x) for x in smtp_anomalies))), set((tuple(x) for x in smtp_anomalies)))
+# tdplot(smtp_anomalies, raw=True)
+# tdplot(smtp_data_answers, raw=True)
 # raise SystemExit(0)
 
 with open('../data/mammography.csv', newline='') as f:
@@ -113,7 +121,7 @@ answers_shuttle = [1 if item in [1, 4] else -1 for item in answers_shuttle_raw]
 # print(answers_shuttle[:100])
 # print("points for RSQT: ", normalized_shuttle.values.tolist()[:100])
 real_shuttle_data = normalized_shuttle.values.tolist()
-real_data = np.core.defchararray.replace(np.array(real_data_full[1:]), "'", '').astype(np.float)
+real_data = np.core.defchararray.replace(np.array(real_data_full[1:]), "'", '').astype(float)
 real_data_normalized = (real_data - real_data.min()) / (real_data.max() - real_data.min())
 # real_data_small = [np.concatenate(([item[0]], item[-13:-11], item[-5:-2], [item[-1]])) for item in real_data]
 real_data_small = real_data
@@ -125,7 +133,7 @@ answers = [1 if it in [-1] else -1 for it in answers_raw]
 
 raw_data = big_small_blob
 dims = len(raw_data[0])
-random_data = (np.random.rand(1000, dims) - 0.5) * 40
+random_data = (np.random.rand(int(n_points * 0.01), dims) - 0.5) * 20
 data = np.concatenate((big_small_blob, random_data))
 
 count_anomaly = 0
@@ -142,9 +150,14 @@ def main(plot_it=False):
     for j in ct:
         st = time.time()
         results_if = IsolationForest(contamination=j, n_estimators=100).fit_predict(smtp_data)
+        # plot_res = []
+        # for g, val in enumerate(smtp_data):
+            # val.append(results_if[g])
+            # plot_res.append(val)
         ctr = 0
         ctr2 = 0
         ctr3 = 0
+        print(smtp_data_answers)
         for ind, res in enumerate(results_if):
             if smtp_answers[ind] == -1 and res == -1:
                 ctr += 1
@@ -154,13 +167,15 @@ def main(plot_it=False):
         print("True Positives: ", ctr, "percentage correct: ", ctr / int(j * len(smtp_answers)))
         print("Total Positives: ", ctr2)
         print("Anomalies in data: ", ctr3)
-        print("ROC-AUC Score: ", roc_auc_score(smtp_answers, results_if))
-        print("results if: ", results_if)
+        # print("ROC-AUC Score: ", roc_auc_score(smtp_answers, results_if))
+        # print("results if: ", results_if)
         print("Running time: ", time.time() - st)
+        # tdplot(plot_res, raw=True)
         # raise SystemExit(0)
 
     start_time = time.time()
-    clf = RSForest(contamination=ct2, k=5, points=smtp_data_answers, granularity=5, sample_size=128)
+    clf = RSForest(contamination=ct2, k=25, points=smtp_data_answers, granularity=10, sample_size=256)
+    # print(smtp_data_answers)
     result, answers_rsf = clf.fit_predict()
     # print(answers_rsf)
     answers_rs = [1 if item in [0.0] else -1 for item in answers_rsf]
@@ -189,4 +204,4 @@ def main(plot_it=False):
     # print("rendered")
 
 
-cProfile.run('main(plot_it=True)')
+cProfile.run('main(plot_it=False)')

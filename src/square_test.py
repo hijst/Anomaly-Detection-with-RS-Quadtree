@@ -7,7 +7,7 @@ from src.rsqt_forest import RSQT
 start_time = time.time()
 
 nr_points = 1000
-contamination = 0.1
+contamination = 0.00
 N = int((1-contamination) * nr_points)  # number of points
 print("N = ", N)
 
@@ -59,7 +59,19 @@ def plot_qt(data, qt=None, draw_grid=False, save=None):
 
 clf = RSQT()
 clf.contamination = contamination
+pts = make_blobs(centers=[[0]], random_state=9, n_samples=255, n_features=1)[0]
+pts_an = np.concatenate([pts, [[4]]], axis=0)
 
+pts_1d = [np.random.random() - 0.5 for i in range(31)]
+pts_1d.append(2)
+points, y_pred, qtree = clf.fit_predict_qt(pts_an)
+
+plt.scatter(pts_1d, [0]*32)
+plt.savefig('../output/example_1d.pdf')
+plt.show()
+
+#plot_qt(points, qt=qtree, draw_grid=False, save='../output/example_1d.pdf')
+raise SystemExit(0)
 points, y_pred, qtree = clf.fit_predict_qt(rect1)
 points2, y_pred2, qtree2 = clf.fit_predict_qt(rect2)
 points3, y_pred3, qtree3 = clf.fit_predict_qt(rect3)

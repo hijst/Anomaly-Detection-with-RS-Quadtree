@@ -117,9 +117,9 @@ class RDQuadTree:
         We split in all dimensions when there is no room for the point.
         """
 
-        #if not self.has_in(p):
-            #print("error: trying to insert point that is outside domain of tree")
-            #return False
+        # if not self.has_in(p):
+        # print("error: trying to insert point that is outside domain of tree")
+        # return False
 
         if self.depth == 0:
             self.points_inside.append(p)

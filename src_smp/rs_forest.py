@@ -4,6 +4,7 @@ import time
 import math
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from joblib import Parallel, delayed
 
 
 def tdplot(data):
@@ -24,7 +25,7 @@ class RSForest:
     includes a fit and a predict method, contamination can be set to define number of outliers.
     """
 
-    def __init__(self, contamination=0.1, k=5, points=None, granularity=5, sample_size=128):
+    def __init__(self, contamination=0.1, k=5, points=None, granularity=5, sample_size=128, answers=True):
 
         self.contamination = contamination
         self.k = k
@@ -33,6 +34,7 @@ class RSForest:
         self.fitted = False
         self.granularity = granularity
         self.sample_size = sample_size
+        self.answers = answers
         if self.points is not None:
             # print("self points: ", self.points)
             self.r_sample, self.test_set = train_test_split(self.points, train_size=self.sample_size, random_state=42)
@@ -49,7 +51,10 @@ class RSForest:
             self.domain = Hypercube(cn, rns)  # hypercube to contain all (shifted) points
             m_depth = 4 * math.ceil(math.log(len(self.r_sample), 2))
             print("max depth: ", m_depth)
-            dim_order = [np.random.randint(self.dimensions - 1, size=m_depth) for i in range(k)]
+            if self.answers:
+                dim_order = [np.random.randint(self.dimensions-1, size=m_depth) for i in range(k)]
+            else:
+                dim_order = [np.random.randint(self.dimensions, size=m_depth) for i in range(k)]
             # dim_order = [i for i in range(self.dimensions-1)] * int(1+(m_depth/(self.dimensions-1)))
             # print("dim order: ", dim_order)
             for i in range(k):
@@ -95,23 +100,36 @@ class RSForest:
         base_pnts = [point for point in self.test_set]
         base_pts = [Point(base_coord) for base_coord in base_pnts]
         stt = time.time()
+        # Parallel(n_jobs=8, prefer="threads")(delayed(self.trees[0].clean_insert)(base_p) for base_p in base_pts)
         for base_p in base_pts:
             self.trees[0].clean_insert(base_p)
         print("time to predict this tree: ", time.time() - stt)
-        for t in self.trees[1:]:
-            self.predict_helper(t)
+        Parallel(n_jobs=4, prefer="threads")(delayed(self.predict_helper)(t) for t in self.trees[1:])
+        # for t in self.trees[1:]:
+            # self.predict_helper(t)
         score_points = self.trees[0].points_inside
         for i in range(len(self.points)):
             for tree in self.trees[1:]:
                 score_points[i].anomaly_score += tree.points_inside[i].anomaly_score
 
+        N = len(self.trees)
+        m_d = self.trees[0].max_depth
+        n = 2 ** m_d
+        for i in range(len(self.points)):
+            hx = score_points[i].anomaly_score
+            Ehx = hx / N
+            print("Ehx: ", Ehx)
+            cn = 2 * np.log(n-1) + .5772156649 - (2*(n-1)/n)
+            print("cn: ", cn)
+            score_points[i].anomaly_score = 2 ** - (Ehx / cn)
+
         cutoff = int(len(score_points) * self.contamination)
 
-        pnts_sorted = sorted(score_points, key=lambda x: x.anomaly_score)
+        pnts_sorted = sorted(score_points, key=lambda x: x.anomaly_score, reverse=True)
         T = pnts_sorted[cutoff].anomaly_score
 
         for pnt in score_points:
-            if pnt.anomaly_score <= T:
+            if pnt.anomaly_score >= T:
                 pnt.is_outlier = -1
             else:
                 pnt.is_outlier = 1

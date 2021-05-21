@@ -19,12 +19,21 @@ from scipy.io import loadmat
 os.environ["PATH"] += os.pathsep + 'C:/Program Files/Graphviz/bin'
 
 # contamination in dataset
-ct = [0.12]
+ct = [0.45]
 # ct = [0.075]
-ct2 = 0.12
+ct2 = 0.42
 
 
 # HELPER FUNCTIONS ---------------------------------------------------------------------------------------------------
+
+def normalize(df):
+    result = df.copy()
+    for feature_name in df.columns:
+        max_value = df[feature_name].max()
+        min_value = df[feature_name].min()
+        result[feature_name] = (df[feature_name] - min_value) / (max_value - min_value)
+    return result
+
 
 def build_tree(tree, dot=None):
     if dot is None:
@@ -51,81 +60,81 @@ def plot(ddata):
     plt.show()
 
 
-def tdplot(data):
+def tdplot(data, raw=False):
     plt.figure()
     ax = plt.axes(projection='3d')
-    colors = np.array(['#ff7f00', '#377eb8'])
-    xs = [x.coordinates[0] for x in data]
-    ys = [y.coordinates[1] for y in data]
-    zs = [z.coordinates[2] for z in data]
-    ax.scatter3D(xs, ys, zs, c=colors[[(p.is_outlier + 1) // 2 for p in data]])
-    # plt.savefig('../output/massive_data_no_noise.pdf')
+    ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 0))
+    ax.w_yaxis.set_pane_color((1.0, 1.0, 1.0, 0))
+    ax.w_zaxis.set_pane_color((1.0, 1.0, 1.0, 0))
+    # colors = np.array(['#ff7f00', '#377eb8'])
+    colors = np.array(['#377eb8', '#ff7f00'])
+    if raw:
+        colors = np.array(['#ff7f00', '#377eb8'])
+        xs = [x[0] for x in data]
+        ys = [y[1] for y in data]
+        zs = [z[2] for z in data]
+        ax.scatter3D(xs, ys, zs, c=colors[[(int(p[-1]) - 1) // 2 for p in data]])
+    else:
+        colors = np.array(['#ff7f00', '#377eb8'])
+        xs = [x.coordinates[0] for x in data]
+        ys = [y.coordinates[1] for y in data]
+        zs = [z.coordinates[2] for z in data]
+        ax.scatter3D(xs, ys, zs, c=colors[[(p.is_outlier + 1) // 2 for p in data]])
+    # plt.savefig('../output/smtp/rsf_smtp_anomalies_tb.png')
     plt.show()
 
 
 # DATASETS ------------------------------------------------------------------------------------------------------------
-big_small_blob = make_blobs(centers=[[0, 0, 0], [12, 12, 12]], n_samples=[8000, 1000],
-                            n_features=3, cluster_std=[4.0, 2.0])[0]
 
-shuttle_data = pd.read_csv('../data/shuttle.csv', delim_whitespace=True, header=None)
-shuttle_data_no_class = shuttle_data.iloc[:, :-1]
-normalized_shuttle = (shuttle_data - shuttle_data.min()) / (shuttle_data.max() - shuttle_data.min())
-answers_shuttle_raw = shuttle_data.iloc[:, -1]
-answers_shuttle = [1 if item in [1, 4] else -1 for item in answers_shuttle_raw]
-# print(answers_shuttle[:100])
-# print("points for RSQT: ", normalized_shuttle.values.tolist()[:100])
-real_shuttle_data = normalized_shuttle.values.tolist()
-
-satellite_data_answers_raw = pd.read_pickle('../data/sat_full.pkl')
-satellite_data_answers = satellite_data_answers_raw.values.tolist()
-satellite_data = satellite_data_answers_raw.iloc[:, :-1]
-satellite_answers_raw = satellite_data_answers_raw.iloc[:, -1:]
-satellite_answers = []
-for sa in satellite_answers_raw[36]:
-    if sa in [1, 3, 4, 5, 7]:
-        satellite_answers.append(1)
+diabetes_data = pd.read_csv('../data/diabetes.csv')
+# diabetes_data_no_class = diabetes_data.iloc[:, :-1]
+diabetes_answers = diabetes_data.iloc[:, -1].tolist()
+diabetes_data_normalized = (diabetes_data - diabetes_data.min()) / (diabetes_data.max() - diabetes_data.min())
+diabetes_data_no_class = diabetes_data_normalized.iloc[:, :-1]
+for inde, a in enumerate(diabetes_answers):
+    if a == 1:
+        diabetes_answers[inde] = -1
     else:
-        satellite_answers.append(-1)
-print(satellite_answers)
+        diabetes_answers[inde] = 1
+diabetes_data_list = diabetes_data_normalized.values.tolist()
+print(diabetes_data_normalized)
+
 
 # END OF DATASETS -----------------------------------------------------------------------------------------------------
-
-raw_data = big_small_blob
-dims = len(raw_data[0])
-random_data = (np.random.rand(1000, dims) - 0.5) * 40
-data = np.concatenate((big_small_blob, random_data))
-
-
-# print("part of anomalies in dataset: ", count_anomaly / len(real_data_small), "number of anomalies: ", count_anomaly)
-print("anomalies in dataset: ", answers_shuttle.count(-1), "percentage: ",
-      answers_shuttle.count(-1) / len(answers_shuttle))
 
 
 def main(plot_it=False):
     for j in ct:
         st = time.time()
-        results_if = IsolationForest(contamination=j, n_estimators=100).fit_predict(satellite_data)
+        results_if = IsolationForest(contamination=j, n_estimators=100).fit_predict(diabetes_data_no_class)
+        # plot_res = []
+        # for g, val in enumerate(smtp_data):
+            # val.append(results_if[g])
+            # plot_res.append(val)
         ctr = 0
         ctr2 = 0
         ctr3 = 0
         for ind, res in enumerate(results_if):
-            if satellite_answers[ind] == -1 and res == -1:
+            if diabetes_answers[ind] == -1 and res == -1:
                 ctr += 1
             if res == -1:
                 ctr2 += 1
         print("Contamination: ", j)
-        print("True Positives: ", ctr, "percentage correct: ", ctr / int(j * len(satellite_answers)))
+        print("True Positives: ", ctr, "percentage correct: ", ctr / int(j * len(diabetes_answers)))
         print("Total Positives: ", ctr2)
-        print("ROC-AUC Score: ", roc_auc_score(satellite_answers, results_if))
-        print("results if: ", results_if)
+        print("Anomalies in data: ", ctr3)
+        print("ROC-AUC Score: ", roc_auc_score(diabetes_answers, results_if))
+        # print("results if: ", results_if)
         print("Running time: ", time.time() - st)
+        # tdplot(plot_res, raw=True)
         # raise SystemExit(0)
 
     start_time = time.time()
-    clf = RSForest(contamination=ct2, k=25, points=satellite_data_answers, granularity=5, sample_size=64)
+    clf = RSForest(contamination=ct2, k=100, points=diabetes_data_list, granularity=10, sample_size=256)
+    # print(smtp_data_answers)
     result, answers_rsf = clf.fit_predict()
     # print(answers_rsf)
-    answers_rs = [1 if item in [1, 3, 4, 5, 7] else -1 for item in answers_rsf]
+    answers_rs = [-1 if item in [1.0] else 1 for item in answers_rsf]
     results = [p.is_outlier for p in result]
     filtered_results = [p for p in result if p.is_outlier == -1]
     filtered_results = sorted(filtered_results[:int(len(result) * ct2)], key=lambda x: x.anomaly_score)
@@ -135,8 +144,10 @@ def main(plot_it=False):
     print(table)
     c = 0
     for it in filtered_results:
-        if it.coordinates[-1] not in [1, 3, 4, 5, 7]:
+        if it.coordinates[-1] not in [1]:
             c += 1
+    print(answers_rs)
+    print(results)
     print("percentage of anomalies in final results: ", c / len(filtered_results), "anomalies found: ",
           c, "normal points found: ", len(filtered_results) - c)
     print("ROC-AUC score: ", roc_auc_score(answers_rs, results))
@@ -151,4 +162,4 @@ def main(plot_it=False):
     # print("rendered")
 
 
-main(plot_it=False)
+cProfile.run('main(plot_it=False)')
